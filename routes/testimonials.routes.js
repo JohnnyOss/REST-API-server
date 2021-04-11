@@ -1,52 +1,81 @@
 const express = require('express');
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const db = require('../db');
+const Testimonial = require('../models/testimonial.model');
 
 const message = { message: 'OK' };
 
-router.route('/testimonials').get((req, res) => {
-    res.json(db.testimonials);
+router.get('/testimonials', async (req, res) => {
+    try {
+        res.json(await Testimonial.find());
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
 
-router.route('/testimonials/random').get((req, res) => {
-    const randomItem = (max) => {
-      return Math.floor(Math.random() * (max));
-    };
-    res.json(db.testimonials[randomItem(db.testimonials.length)]);
+router.get('/testimonials/random', async (req, res) => {
+    try {
+        const count = await Testimonial.countDocuments();
+        const rand = Math.floor(Math.random() * count);
+        const tes = await Testimonial.findOne().skip(rand);
+        if(!tes) res.status(404).json({ message: 'Not found...' });
+        else res.json(tes);
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
 
-router.route('/testimonials/:id').get((req, res) => {
-    res.json(db.testimonials.filter(item => item.id == req.params.id));
+router.get('/testimonials/:id', async (req, res) => {
+    try {
+        const tes = await Testimonial.findById(req.params.id);
+        if(!tes) res.status(404).json({ message: 'Not found...' });
+        else res.json(tes);
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
 
-router.route('/testimonials').post((req, res) => {
-    const newItem = {
-        id: uuidv4(),
-        author: req.body.author,
-        text: req.body.text,
-    };
-    db.testimonials.push(newItem);
-    res.json(message);
+router.post('/testimonials', async (req, res) => {
+    try {
+        const { author, text } = req.body;
+        const newTestimonial = new Testimonial({ author: author, text: text });
+        await newTestimonial.save();
+        res.json(message);
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
 
-router.route('/testimonials/:id').put((req, res) => {
-    const updatedItem = db.testimonials.find(item => item.id == req.params.id);
-    const index = db.testimonials.indexOf(updatedItem);
-    const updateContent = ({
-        id: req.params.id,
-        author: req.body.author,
-        text: req.body.text,
-    });
-    db.testimonials[index] = updateContent;
-    res.json(message);
+router.put('/testimonials/:id', async (req, res) => {
+    const { author, text } = req.body;
+    try {
+        const tes = await(Testimonial.findById(req.params.id));
+        if(tes) {
+            await Testimonial.updateOne({ _id: req.params.id }, { $set: { author: author, text: text }});
+            res.json(message);
+        }
+        else res.status(404).json({ message: 'Not found...' });
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
 
-router.route('/testimonials/:id').delete((req, res) => {
-    const deletedItem = db.testimonials.find(item => item.id == req.params.id);
-    const index = db.testimonials.indexOf(deletedItem);
-    db.testimonials.splice(index, 1);
-    res.json(message);
+router.delete('/testimonials/:id', async (req, res) => {
+    try {
+        const tes = await(Testimonial.findById(req.params.id));
+        if(tes) {
+            await Testimonial.deleteOne({ _id: req.params.id });
+            res.json(message);
+        }
+        else res.status(404).json({ message: 'Not found...' });
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
 
 module.exports = router;

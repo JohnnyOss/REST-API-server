@@ -1,51 +1,68 @@
 const express = require('express');
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const db = require('../db');
+const Concert = require('../models/concert.model');
 
 const message = { message: 'OK' };
 
-router.route('/concerts').get((req, res) => {
-    res.json(db.concerts);
+router.get('/concerts', async (req, res) => {
+    try {
+        res.json(await Concert.find());
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
 
-router.route('/concerts/:id').get((req, res) => {
-    res.json(db.concerts.filter(item => item.id == req.params.id));
+router.get('/concerts/:id', async (req, res) => {
+    try {
+        const con = await Concert.findById(req.params.id);
+        if(!con) res.status(404).json({ message: 'Not found' });
+        else res.json(con);
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
 
-router.route('/concerts').post((req, res) => {
-    const newItem = {
-        id: uuidv4(),
-        performer: req.body.performer,
-        genre: req.body.genre,
-        price: req.body.price,
-        day: req.body.day,
-        image: req.body.image,
-    };
-    db.concerts.push(newItem);
-    res.json(message);
+router.post('/concerts', async (req, res) => {
+    try {
+        const { performer, genre, price, day, image } = req.body;
+        const newConcert = new Concert({ performer: performer, genre: genre, price: price, day: day, image: image });
+        await newConcert.save();
+        res.json(message);
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
 
-router.route('/concerts/:id').put((req, res) => {
-    const updatedItem = db.concerts.find(item => item.id == req.params.id);
-    const index = db.concerts.indexOf(updatedItem);
-    const updateContent = ({
-        id: req.params.id,
-        performer: req.body.performer,
-        genre: req.body.genre,
-        price: req.body.price,
-        day: req.body.day,
-        image: req.body.image,
-    });
-    db.concerts[index] = updateContent;
-    res.json(message);
+router.put('/concerts/:id', async (req, res) => {
+    const { performer, genre, price, day, image } = req.body;
+    try {
+      const con = await(Concert.findById(req.params.id));
+      if(con) {
+        await Concert.updateOne({ _id: req.params.id }, { $set: { performer: performer, genre: genre, price: price, day: day, image: image }});
+        res.json(message);
+      }
+      else res.status(404).json({ message: 'Not found...' });
+    }
+    catch(err) {
+      res.status(500).json({ message: err });
+    }
 });
 
-router.route('/concerts/:id').delete((req, res) => {
-    const deletedItem = db.concerts.find(item => item.id == req.params.id);
-    const index = db.concerts.indexOf(deletedItem);
-    db.concerts.splice(index, 1);
-    res.json(message);
+router.delete('/concerts/:id', async (req, res) => {
+    try {
+        const con = await(Concert.findById(req.params.id));
+        if(con) {
+            await Concert.deleteOne({ _id: req.params.id });
+            res.json(message);
+        }
+        else res.status(404).json({ message: 'Not found...' });
+    }
+    catch(err) {
+        res.status(500).json({ message: err });
+    }
 });
-
+  
 module.exports = router;
