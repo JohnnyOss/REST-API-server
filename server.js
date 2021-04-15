@@ -31,7 +31,9 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Not found...' });
 });
 
-mongoose.connect('mongodb+srv://admin-test:kodilla@cluster0.tert9.mongodb.net/NewWaveDB?retryWrites=true&w=majority', { useNewUrlParser: true });
+// const dbURI = process.env.NODE_ENV === 'production' ? `mongodb+srv://admin-test:kodilla@cluster0.tert9.mongodb.net/NewWaveDB?retryWrites=true&w=majority` : 'mongodb://localhost:27017/NewWaveDB';
+// mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb+srv://admin-test:kodilla@cluster0.tert9.mongodb.net/NewWaveDB?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
 const db = mongoose.connection;
 
 db.once('open', () => {
@@ -42,6 +44,8 @@ db.on('error', err => console.log('Error ' + err));
 const server = app.listen(process.env.PORT || 8000, () => {
   console.log('Server is running on port: 8000');
 });
+
+module.exports = server;
 
 const io = socket(server, { cors: { origin: '*' } });
 
