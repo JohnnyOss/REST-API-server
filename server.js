@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const concertsRoutes = require('./routes/concerts.routes');
 const seatsRoutes = require('./routes/seats.routes');
 const testimonialsRoutes = require('./routes/testimonials.routes');
+const helmet = require('helmet');
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cors())
 app.use(express.static(path.join(__dirname, '/client/build')));
+app.use(helmet());
 
 app.use((req, res, next) => {
   req.io = io;
@@ -33,7 +35,7 @@ app.use((req, res) => {
 
 // const dbURI = process.env.NODE_ENV === 'production' ? `mongodb+srv://admin-test:kodilla@cluster0.tert9.mongodb.net/NewWaveDB?retryWrites=true&w=majority` : 'mongodb://localhost:27017/NewWaveDB';
 // mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true });
-mongoose.connect('mongodb+srv://admin-test:kodilla@cluster0.tert9.mongodb.net/NewWaveDB?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(`mongodb+srv://${process.env.userName}:${process.env.userPass}@cluster0.tert9.mongodb.net/NewWaveDB?retryWrites=true&w=majority`, { useNewUrlParser: true, useUnifiedTopology: true });
 const db = mongoose.connection;
 
 db.once('open', () => {
