@@ -1,6 +1,7 @@
 .vscode
 dist
 .idea
+/node_modules
 
 # Logs
 logs
